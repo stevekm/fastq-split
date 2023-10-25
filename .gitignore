@@ -1,0 +1,6 @@
+data/test2.fastq
+data/test2.fastq.gz
+build
+*.fastq*
+fastqSplit
+fastqSplit-wg
