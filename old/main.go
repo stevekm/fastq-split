@@ -1,5 +1,5 @@
 package main
-
+// This is the old simple version of the program before I added go routine handling
 import (
 	"bufio"
 	// "compress/gzip"
