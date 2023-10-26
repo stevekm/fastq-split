@@ -17,12 +17,14 @@ test-run:
 	go run $(SRC) $(FASTQ)
 	go run $(SRC) $(FASTQGZ)
 
-build:
-	go build -o ./$(BIN) ./$(SRC)
-.PHONY:build
-
+# NOTE: you can just ignore this error message;
 # fatal: No names found, cannot describe anything.
 GIT_TAG:=$(shell git describe --tags)
+
+build:
+	go build -ldflags="-X 'main.Version=$(GIT_TAG)'" -o ./$(BIN) ./$(SRC)
+.PHONY:build
+
 build-all:
 	mkdir -p build ; \
 	for os in darwin linux windows; do \
@@ -30,7 +32,7 @@ build-all:
 	output="build/$(BIN)-v$(GIT_TAG)-$$os-$$arch" ; \
 	if [ "$${os}" == "windows" ]; then output="$${output}.exe"; fi ; \
 	echo "building: $$output" ; \
-	GOOS=$$os GOARCH=$$arch go build -o "$${output}" $(SRC) ; \
+	GOOS=$$os GOARCH=$$arch go build -ldflags="-X 'main.Version=$(GIT_TAG)'" -o "$${output}" $(SRC) ; \
 	done ; \
 	done
 

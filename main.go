@@ -23,6 +23,9 @@ buffer your output. try tweaking scanner’s input buffer size.
 if they are on separate disks then making the writing run in parallel might help
 */
 
+// overwrite this at build time
+// https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
+var Version = "foo-version"
 
 // holds an open file handle so it doesnt need to be re-opened repeatedly
 type FileHolder struct {
@@ -260,6 +263,11 @@ type Config struct {
 	CliArgs           []string
 }
 
+func PrintVersionAndQuit(){
+	fmt.Println(Version)
+	os.Exit(0)
+}
+
 func main() {
 	// runtime.GOMAXPROCS(2) // NOTE: dont use this because it defaults to the number of CPUs on recent Go versions
 	headerDelim := flag.String("d", ":", "delimiter character for the fastq header fields")
@@ -269,8 +277,13 @@ func main() {
 	fileSuffix := flag.String("suffix", ".fastq", "suffix for all output file names")
 	filePrefix := flag.String("prefix", "", "prefix for all output file names")
 	fieldKeys := flag.String("k", "2,3", "comma delimited string of 0-based integer field keys to split the fastq header line on")
+	printVersion := flag.Bool("v", false, "print version information")
 	flag.Parse()
 	cliArgs := flag.Args() // all positional args passed
+
+	if *printVersion {
+		PrintVersionAndQuit()
+	}
 
 	// parse the field keys to use for creating the Read Group
 	fieldKeysParts := strings.Split(*fieldKeys, ",")
