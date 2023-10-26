@@ -20,7 +20,7 @@ fastqSplit data/test1.fastq
 
 Will output files `XYZ12345.1.fastq` and `XYZ12345.2.fastq`
 
-If you fastq file is .gz compressed, you should pipe it in with `zcat` or `gunzip`;
+If your fastq file is .gz compressed, you should pipe it in with `zcat` or `gunzip`;
 
 ```
 gunzip -c data/test1.fastq.gz | ./fastqSplit
