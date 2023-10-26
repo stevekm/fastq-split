@@ -26,11 +26,40 @@ If you fastq file is .gz compressed, you should pipe it in with `zcat` or `gunzi
 gunzip -c data/test1.fastq.gz | ./fastqSplit
 ```
 
-(`fastqSplit` can read from .gz compressed files natively but the .gz archive compression will be much faster if handled in a separate process and transmitted over stdin with a pipe )
+## Options
+
+Note that `fastqSplit` can read from .gz compressed files natively, but the .gz archive decompression, and total execution time, will be much faster if handled in a separate process and transmitted over stdin with a pipe as shown in the above examples. However if you wish to use `fastqSplit`'s built-in .gz decompression, you should add the `-p` arg in order to utilize background buffered file decompression & scanning for a performance boost.
+
+Other command line options for `fastqSplit` include;
+
+```
+  -b int
+    	read buffer size (number of lines) when using parallel read method (default 10000)
+  -delim string
+    	delimiter character for the fastq header fields (default ":")
+  -fcIndexPos int
+    	field number for the flowcell ID in the header (default 2)
+  -laneIndexPos int
+    	field number for the lane ID in the header (default 3)
+  -p	read input on a separate thread (parallel)
+  -rgJoinChar string
+    	character used to join the flowcell and lane IDs to create the read group ID (default ".")
+```
+
+Note that the "field number" for flowcell ID and lane ID is 0-based, so in the header example `@EAS139:136:FC706VJ:2`, the value `FC706VJ` is position 2 and value `2` is in position 3.
+
 
 # Installation
 
+You can download a pre-built binary from the Releases page.
 
+You can get it from Docker Hub here: (coming soon)
+
+You can build it from source with Go version 1.20+
+
+```
+go build -o ./fastqSplit ./main.go
+```
 
 # Notes
 
@@ -65,5 +94,3 @@ real    1m32.150s
 user    2m13.515s
 sys     0m43.867s
 ```
-
-Speed increases are supposedly due to holding open output file handles, but could possibly be increased further with other methods as well.
