@@ -94,3 +94,5 @@ real    1m32.150s
 user    2m13.515s
 sys     0m43.867s
 ```
+
+Tested against GNU Awk 5.0.1 on x86_64 GNU/Linux.
