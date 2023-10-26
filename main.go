@@ -13,10 +13,9 @@ import (
 	"sync"
 )
 
-
 /*
 NOTES from tiko
-- decreasing gomaxprocs is a bad idea; default is numCPUs in modern version of Go
+- decreasing gomaxprocs runtime.GOMAXPROCS() is a bad idea; default is numCPUs in modern version of Go
 if you want to optimize your go program:
 avoid allocating. use []byte instead of string everywhere and pass the same byte slice around. don’t use strings.Split, use bytes.Index etc.
 buffer your output. try tweaking scanner’s input buffer size.
@@ -263,13 +262,12 @@ type Config struct {
 	CliArgs           []string
 }
 
-func PrintVersionAndQuit(){
+func PrintVersionAndQuit() {
 	fmt.Println(Version)
 	os.Exit(0)
 }
 
 func main() {
-	// runtime.GOMAXPROCS(2) // NOTE: dont use this because it defaults to the number of CPUs on recent Go versions
 	headerDelim := flag.String("d", ":", "delimiter character for the fastq header fields")
 	readGroupJoinChar := flag.String("j", ".", "character used to Join the selected key values on to create the read group ID")
 	runParallel := flag.Bool("p", false, "read input on a separate thread (parallel)")
