@@ -53,7 +53,7 @@ Note that the "field number" for flowcell ID and lane ID is 0-based, so in the h
 
 You can download a pre-built binary from the Releases page [here](https://github.com/stevekm/fastq-split/releases).
 
-You can get it from Docker Hub here: (coming soon)
+You can get it from Docker Hub [here](https://hub.docker.com/repository/docker/stevekm/fastq-split/tags?page=1&ordering=last_updated).
 
 You can build it from source with Go version 1.20+
 
