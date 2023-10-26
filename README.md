@@ -73,7 +73,7 @@ gunzip -c ${fastq} | awk 'BEGIN{FS="[@:]"}{out=$4"."$5".fastq"; print > out; for
 
 ## Comparison
 
-Using a 3.5GB size fastq.gz file with 268093288 lines (67023322 total reads), tested on a Linux server, you get roughly 40% speed up using `fastqSplit` over `awk`.
+Using a 3.5GB size fastq.gz file with 268093288 lines (67023322 total reads), tested on a Linux server, you get roughly 40% speed up using `fastqSplit` over `awk`. Tests with other files show a similar 40-50% speed increase.
 
 - `awk` method; 132s
 
