@@ -1,26 +1,35 @@
 `fastqSplit`
 
-Program to split a fastq file into separate files per read group, where the read group is defined as `<flow cell ID>.<lane number>`. The flow cell ID and the lane number are extracted from each fastq record header line.
-
-The default parameters assume that your fastq file has headers in the [Illumina format](https://en.wikipedia.org/wiki/FASTQ_format#Illumina_sequence_identifiers); example:
-
-```
-@EAS139:136:FC706VJ:2:2104:15343:197393 1:N:18:1
-```
-
-In this example, the flow cell ID is `FC706VJ` and the lane ID is `2`.
+Program to split a fastq file into separate files based on selected fields in each read's header.
 
 # Usage
 
-Example usage;
+You can use `fastqSplit` to chunk a .fastq or .fastq.gz file into new files based on fields in the header line of each FASTQ read. For example, you could split all reads into separate files based on read group.
+
+Your FASTQ records may have header lines that look like this;
 
 ```
+@ABCD12:36:XYZ12345:1:1101:1524:1000 1:N:0:GCTCGGTA+GACACGTT
+...
+...
+...
+@ABCD12:36:XYZ12345:2:1101:2230:1000 1:N:0:GCTCGGTA+GACACGTT
+...
+...
+...
+```
+
+Where the flow cell ID is `XYZ12345`, and the lane ID's are `1` and `2`. By default, `fastqSplit` will attempt to use these to create read group ID's in the format `<flow cell ID>.<lane number>`, which would be `XYZ12345.1` and `XYZ12345.2` in this example. You can run `fastqSplit` like this
+
+```bash
 fastqSplit data/test1.fastq
 ```
 
-Will output files `XYZ12345.1.fastq` and `XYZ12345.2.fastq`
+and it will output files `XYZ12345.1.fastq` and `XYZ12345.2.fastq`, which contain only the reads with these read groups.
 
-If your fastq file is .gz compressed, you should pipe it in with `zcat` or `gunzip`;
+The default parameters assume that your fastq file has headers in the [Illumina format](https://en.wikipedia.org/wiki/FASTQ_format#Illumina_sequence_identifiers). You can select different field delimiter and field indexes yourself based on the command line args provided by the program.
+
+If your fastq file is .gz compressed, you should pipe it in with `zcat` or `gunzip` or `pigz` for faster processing;
 
 ```
 gunzip -c data/test1.fastq.gz | ./fastqSplit
@@ -28,25 +37,29 @@ gunzip -c data/test1.fastq.gz | ./fastqSplit
 
 ## Options
 
-Note that `fastqSplit` can read from .gz compressed files natively, but the .gz archive decompression, and total execution time, will be much faster if handled in a separate process and transmitted over stdin with a pipe as shown in the above examples. However if you wish to use `fastqSplit`'s built-in .gz decompression, you should add the `-p` arg in order to utilize background buffered file decompression & scanning for a performance boost.
+While `fastqSplit` can read from .gz compressed files, archive decompression and total execution time will be much faster if handled in a separate process and transmitted over stdin with a pipe as shown in the above examples. If you wish to use `fastqSplit`'s built-in .gz decompression, you should add the `-p` arg in order to utilize background buffered file decompression & scanning for a small performance boost.
 
 Other command line options for `fastqSplit` include;
 
 ```
   -b int
     	read buffer size (number of lines) when using parallel read method (default 10000)
-  -delim string
+  -d string
     	delimiter character for the fastq header fields (default ":")
-  -fcIndexPos int
-    	field number for the flowcell ID in the header (default 2)
-  -laneIndexPos int
-    	field number for the lane ID in the header (default 3)
+  -j string
+    	character used to Join the selected key values on to create the read group ID (default ".")
+  -k string
+    	comma delimited string of 0-based integer field keys to split the fastq header line on (default "2,3")
   -p	read input on a separate thread (parallel)
-  -rgJoinChar string
-    	character used to join the flowcell and lane IDs to create the read group ID (default ".")
+  -prefix string
+    	prefix for all output file names
+  -suffix string
+    	suffix for all output file names (default ".fastq")
 ```
 
-Note that the "field number" for flowcell ID and lane ID is 0-based, so in the header example `@EAS139:136:FC706VJ:2`, the value `FC706VJ` is position 2 and value `2` is in position 3.
+### `-k` Field Keys
+
+The values for the `-k` field key index arg are integers using 0-based indexing, so in the header example `@EAS139:136:FC706VJ:2`, the value `FC706VJ` is position 2 and value `2` is in position 3. These values are passed as a single comma-delimited string; `-k 2,3`.
 
 
 # Installation
@@ -105,4 +118,4 @@ user    1m45.716s
 sys     1m6.102s
 ```
 
-Tested against GNU Awk 5.0.1 on x86_64 GNU/Linux.
+Tested with GNU Awk 5.0.1 on x86_64 GNU/Linux, and `pigz` version 2.8.
