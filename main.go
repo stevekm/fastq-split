@@ -68,8 +68,8 @@ func GetScanner(args []string) (*bufio.Scanner, *os.File, *os.File) {
 		if strings.HasSuffix(filePath, ".gz") {
 			// NOTE: could use custom buffered reader here but in tests it did not speed anything up
 			// https://github.com/klauspost/pgzip/blob/17e8dac29df8ce00febbd08ee5d8ee922024a003/gunzip.go#L139
-			gz, err := gzip.NewReaderN(file, 100000000, 2) // 1000000 : 1MB, 16 blocks
-			// gz, err := gzip.NewReader(file)
+			// gz, err := gzip.NewReaderN(file, 100000000, 2) // 1000000 : 1MB, 16 blocks
+			gz, err := gzip.NewReader(file)
 
 			if err != nil {
 				log.Fatalf("Error opening file: %v\n", err)
