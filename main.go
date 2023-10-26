@@ -73,16 +73,17 @@ func GetScanner(args []string) (*bufio.Scanner, *os.File, *os.File) {
 	return scanner, file, gzFile
 }
 
-func GetReadGroup(line string, headerDelim string, flowCellFieldIndex int, laneFieldIndex int, readGroupJoinChar string) string {
+func GetReadGroup(line string, config Config) string {
+	// headerDelim string, flowCellFieldIndex int, laneFieldIndex int, readGroupJoinChar string
 	// extracts the read group from the line
-	parts := strings.Split(line, headerDelim)
+	parts := strings.Split(line, config.HeaderDelim)
 
 	// make sure we have parts left
 	if len(parts) < 2 {
 		log.Fatalf("Error extracting read group ID from line:\n%v\n", line)
 	}
 
-	readGroupID := parts[flowCellFieldIndex] + readGroupJoinChar + parts[laneFieldIndex]
+	readGroupID := parts[config.FlowCellFieldIndex] + config.ReadGroupJoinChar + parts[config.LaneFieldIndex]
 
 	return readGroupID
 }
@@ -113,13 +114,7 @@ func WriteLine(outputFiles map[string]FileHolder, readGroupID string, line strin
 	}
 }
 
-func runMain(args Config) {
-	headerDelim := args.HeaderDelim
-	flowCellFieldIndex := args.FlowCellFieldIndex
-	laneFieldIndex := args.LaneFieldIndex
-	readGroupJoinChar := args.ReadGroupJoinChar
-	cliArgs := args.CliArgs
-
+func runMain(config Config) {
 	// Initialize variables to keep track of output files
 	outputFiles := make(map[string]FileHolder)
 	// TODO: should we have an output directory to avoid filename conflict?
@@ -128,7 +123,7 @@ func runMain(args Config) {
 	var readGroupID string
 
 	// get input file scanner
-	scanner, inputFile, inputGzFile := GetScanner(cliArgs)
+	scanner, inputFile, inputGzFile := GetScanner(config.CliArgs)
 	if inputFile != nil {
 		defer inputFile.Close()
 	}
@@ -144,7 +139,7 @@ func runMain(args Config) {
 		line := scanner.Text()
 		// Extract the flowcell ID from the first line of each FASTQ record
 		if strings.HasPrefix(line, "@") {
-			readGroupID = GetReadGroup(line, headerDelim, flowCellFieldIndex, laneFieldIndex, readGroupJoinChar)
+			readGroupID = GetReadGroup(line, config)
 			CreateOutputFileEntry(outputFiles, readGroupID)
 		}
 		WriteLine(outputFiles, readGroupID, line)
@@ -163,22 +158,16 @@ func runMain(args Config) {
 	}
 }
 
-func runMainP(args Config) {
+func runMainP(config Config) {
 	// parallel read / write implementation that uses a separate go routine to run the read operations
 	// this is only faster when used with .gz input file
 	// but is actually slower that just using gunzip -c | input for the program so its not actually worth using
-	headerDelim := args.HeaderDelim
-	flowCellFieldIndex := args.FlowCellFieldIndex
-	laneFieldIndex := args.LaneFieldIndex
-	readGroupJoinChar := args.ReadGroupJoinChar
-	cliArgs := args.CliArgs
-	bufferSize := args.BufferSize
 
 	// Create a WaitGroup to wait for all goroutines to finish
 	var wg sync.WaitGroup
 
 	// Create a channel for reader goroutine to send lines through
-	lines := make(chan string, bufferSize)
+	lines := make(chan string, config.BufferSize)
 
 	// Launch worker goroutine to read lines
 	wg.Add(1)
@@ -187,7 +176,7 @@ func runMainP(args Config) {
 		defer close(lines)
 
 		// get input file scanner
-		scanner, inputFile, inputGzFile := GetScanner(cliArgs)
+		scanner, inputFile, inputGzFile := GetScanner(config.CliArgs)
 		if inputFile != nil {
 			defer inputFile.Close()
 		}
@@ -215,7 +204,7 @@ func runMainP(args Config) {
 	// process the lines and write to file
 	for line := range lines {
 		if strings.HasPrefix(line, "@") {
-			readGroupID = GetReadGroup(line, headerDelim, flowCellFieldIndex, laneFieldIndex, readGroupJoinChar)
+			readGroupID = GetReadGroup(line, config)
 			CreateOutputFileEntry(outputFiles, readGroupID)
 		}
 		WriteLine(outputFiles, readGroupID, line)
@@ -238,6 +227,7 @@ type Config struct {
 	ReadGroupJoinChar  string
 	RunParallel        bool
 	BufferSize         int
+	FileSuffix string
 	CliArgs            []string
 }
 
@@ -249,6 +239,7 @@ func main() {
 	readGroupJoinChar := flag.String("rgJoinChar", ".", "character used to join the flowcell and lane IDs to create the read group ID")
 	runParallel := flag.Bool("p", false, "read input on a separate thread (parallel)")
 	bufferSize := flag.Int("b", 10000, "read buffer size (number of lines) when using parallel read method")
+	fileSuffix := flag.String("suffix", ".fastq", "suffix for all output file names")
 	flag.Parse()
 	cliArgs := flag.Args() // all positional args passed
 
@@ -259,6 +250,7 @@ func main() {
 		*readGroupJoinChar,
 		*runParallel,
 		*bufferSize,
+		*fileSuffix,
 		cliArgs,
 	}
 
