@@ -26,7 +26,7 @@ RUN go build -o /fastqSplit main.go
 
 # NOTE: had issues with alpine on AWS Batch so use Debian or Ubuntu instead
 FROM --platform=linux/amd64 ubuntu:22.04
-RUN apt update -y && apt upgrade -y
+RUN apt update -y && apt upgrade -y && apt install -y pigz
 
 # Also consider Debian Slim
 # https://www.nextflow.io/docs/latest/tracing.html#trace-required-packages
