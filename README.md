@@ -51,7 +51,7 @@ Note that the "field number" for flowcell ID and lane ID is 0-based, so in the h
 
 # Installation
 
-You can download a pre-built binary from the Releases page.
+You can download a pre-built binary from the Releases page [here](https://github.com/stevekm/fastq-split/releases).
 
 You can get it from Docker Hub here: (coming soon)
 
