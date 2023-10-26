@@ -88,13 +88,13 @@ func GetReadGroup(line string, config Config) string {
 	return readGroupID
 }
 
-func CreateOutputFileEntry(outputFiles map[string]FileHolder, readGroupID string) {
+func CreateOutputFileEntry(outputFiles map[string]FileHolder, readGroupID string, config Config) {
 	// Create a new output file if it doesn't exist
 
 	// NOTE: maps are pass by reference; https://stackoverflow.com/questions/40680981/are-maps-passed-by-value-or-by-reference-in-go
 	// so the outputFiles map will be updated in-place in the scope of the caller
 	if _, exists := outputFiles[readGroupID]; !exists {
-		outputFileName := fmt.Sprintf("%s.fastq", readGroupID)
+		outputFileName := fmt.Sprintf("%s%s%s", config.FilePrefix, readGroupID, config.FileSuffix)
 		outputFiles[readGroupID] = CreateFileHolder(outputFileName)
 	}
 }
@@ -140,7 +140,7 @@ func runMain(config Config) {
 		// Extract the flowcell ID from the first line of each FASTQ record
 		if strings.HasPrefix(line, "@") {
 			readGroupID = GetReadGroup(line, config)
-			CreateOutputFileEntry(outputFiles, readGroupID)
+			CreateOutputFileEntry(outputFiles, readGroupID, config)
 		}
 		WriteLine(outputFiles, readGroupID, line)
 	}
@@ -205,7 +205,7 @@ func runMainP(config Config) {
 	for line := range lines {
 		if strings.HasPrefix(line, "@") {
 			readGroupID = GetReadGroup(line, config)
-			CreateOutputFileEntry(outputFiles, readGroupID)
+			CreateOutputFileEntry(outputFiles, readGroupID, config)
 		}
 		WriteLine(outputFiles, readGroupID, line)
 	}
@@ -227,7 +227,8 @@ type Config struct {
 	ReadGroupJoinChar  string
 	RunParallel        bool
 	BufferSize         int
-	FileSuffix string
+	FileSuffix         string
+	FilePrefix         string
 	CliArgs            []string
 }
 
@@ -240,6 +241,7 @@ func main() {
 	runParallel := flag.Bool("p", false, "read input on a separate thread (parallel)")
 	bufferSize := flag.Int("b", 10000, "read buffer size (number of lines) when using parallel read method")
 	fileSuffix := flag.String("suffix", ".fastq", "suffix for all output file names")
+	filePrefix := flag.String("prefix", "", "prefix for all output file names")
 	flag.Parse()
 	cliArgs := flag.Args() // all positional args passed
 
@@ -251,6 +253,7 @@ func main() {
 		*runParallel,
 		*bufferSize,
 		*fileSuffix,
+		*filePrefix,
 		cliArgs,
 	}
 
