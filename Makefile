@@ -42,14 +42,14 @@ build-test-run: build
 	./$(BIN) $(FASTQ)
 	./$(BIN) $(FASTQGZ)
 
-# # docker build -t stevekm/dump-software-versions:latest .
-# DOCKER_TAG:=stevekm/dump-software-versions:$(GIT_TAG)
-# docker-build:
-# 	docker build -t $(DOCKER_TAG) .
+# docker build -t stevekm/fastq-split:latest .
+DOCKER_TAG:=stevekm/fastq-split:$(GIT_TAG)
+docker-build:
+	docker build -t $(DOCKER_TAG) .
 
-# # docker push stevekm/dump-software-versions:latest
-# docker-push:
-# 	docker push $(DOCKER_TAG)
+# docker push stevekm/fastq-split:latest
+docker-push:
+	docker push $(DOCKER_TAG)
 
-# docker-test-run:
-# 	docker run --platform linux/amd64 --rm -ti -v ${PWD}:${PWD} --workdir ${PWD} $(DOCKER_TAG) dumpSoftwareVersions -manifestName dump-software-version-demo -manifestVersion 1.0 -nxfVersion 23.04.1 -processLabel CUSTOM_DUMPSOFTWAREVERSIONS example/collated_versions.yml
+docker-test-run:
+	docker run --platform linux/amd64 --rm -ti -v ${PWD}:${PWD} --workdir ${PWD} $(DOCKER_TAG) $(BIN) $(FASTQ)
