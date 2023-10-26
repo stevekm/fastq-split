@@ -13,6 +13,17 @@ import (
 	"sync"
 )
 
+
+/*
+NOTES from tiko
+- decreasing gomaxprocs is a bad idea; default is numCPUs in modern version of Go
+if you want to optimize your go program:
+avoid allocating. use []byte instead of string everywhere and pass the same byte slice around. don’t use strings.Split, use bytes.Index etc.
+buffer your output. try tweaking scanner’s input buffer size.
+if they are on separate disks then making the writing run in parallel might help
+*/
+
+
 // holds an open file handle so it doesnt need to be re-opened repeatedly
 type FileHolder struct {
 	File   *os.File
@@ -94,6 +105,7 @@ func GetReadGroup(line string, config Config) string {
 	// }
 	// readGroupID := parts[config.FlowCellFieldIndex] + config.ReadGroupJoinChar + parts[config.LaneFieldIndex]
 
+	// NOTE: when I changed this from the above method, the program got a little slower, maybe due to the allocations and list-growing, not sure
 	// get each desired field from the line
 	for _, index := range config.FieldKeys {
 		rgParts = append(rgParts, lineParts[index])
