@@ -47,7 +47,7 @@ build-test-run: build
 # docker build -t stevekm/fastq-split:latest .
 DOCKER_TAG:=stevekm/fastq-split:$(GIT_TAG)
 docker-build:
-	docker build -t $(DOCKER_TAG) .
+	docker build --build-arg "Version=$(GIT_TAG)" -t $(DOCKER_TAG) .
 
 # docker push stevekm/fastq-split:latest
 docker-push:

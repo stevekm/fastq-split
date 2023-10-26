@@ -11,9 +11,15 @@ WORKDIR /app
 COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
+
+# overwrite this at build time
+# put this here so previous layers do not get invalidated
+# https://stackoverflow.com/questions/60450479/using-arg-and-env-in-dockerfile
+ARG Version=foo-docker-version
+
 COPY main.go ./
 # RUN go test -v ./...
-RUN go build -o /fastqSplit main.go
+RUN go build -ldflags="-X 'main.Version=$Version'" -o /fastqSplit main.go
 
 ##
 ## Deploy
