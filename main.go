@@ -8,6 +8,7 @@ import (
 	gzip "github.com/klauspost/pgzip"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -74,16 +75,32 @@ func GetScanner(args []string) (*bufio.Scanner, *os.File, *os.File) {
 }
 
 func GetReadGroup(line string, config Config) string {
-	// headerDelim string, flowCellFieldIndex int, laneFieldIndex int, readGroupJoinChar string
 	// extracts the read group from the line
-	parts := strings.Split(line, config.HeaderDelim)
 
+	// break the line into parts based on the delimiter
+	lineParts := strings.Split(line, config.HeaderDelim)
+
+	// fill in the selected portions of the line here
+	rgParts := []string{}
+
+	// placeholder for the final ID
+	var readGroupID string
+
+	// NOTE: figure out if we need to re-instate this safety check
+	// NOTE: change this to 1
 	// make sure we have parts left
-	if len(parts) < 2 {
-		log.Fatalf("Error extracting read group ID from line:\n%v\n", line)
+	// if len(parts) < 2 {
+	// 	log.Fatalf("Error extracting read group ID from line:\n%v\n", line)
+	// }
+	// readGroupID := parts[config.FlowCellFieldIndex] + config.ReadGroupJoinChar + parts[config.LaneFieldIndex]
+
+	// get each desired field from the line
+	for _, index := range config.FieldKeys {
+		rgParts = append(rgParts, lineParts[index])
 	}
 
-	readGroupID := parts[config.FlowCellFieldIndex] + config.ReadGroupJoinChar + parts[config.LaneFieldIndex]
+	// join all the desired fields with the output delimiter
+	readGroupID = strings.Join(rgParts, config.ReadGroupJoinChar)
 
 	return readGroupID
 }
@@ -221,39 +238,47 @@ func runMainP(config Config) {
 }
 
 type Config struct {
-	HeaderDelim        string
-	FlowCellFieldIndex int
-	LaneFieldIndex     int
-	ReadGroupJoinChar  string
-	RunParallel        bool
-	BufferSize         int
-	FileSuffix         string
-	FilePrefix         string
-	CliArgs            []string
+	HeaderDelim       string
+	ReadGroupJoinChar string
+	RunParallel       bool
+	BufferSize        int
+	FileSuffix        string
+	FilePrefix        string
+	FieldKeys         []int
+	CliArgs           []string
 }
 
 func main() {
 	// runtime.GOMAXPROCS(2) // NOTE: dont use this because it defaults to the number of CPUs on recent Go versions
-	headerDelim := flag.String("delim", ":", "delimiter character for the fastq header fields")
-	flowCellFieldIndex := flag.Int("fcIndexPos", 2, "field number for the flowcell ID in the header")
-	laneFieldIndex := flag.Int("laneIndexPos", 3, "field number for the lane ID in the header")
-	readGroupJoinChar := flag.String("rgJoinChar", ".", "character used to join the flowcell and lane IDs to create the read group ID")
+	headerDelim := flag.String("d", ":", "delimiter character for the fastq header fields")
+	readGroupJoinChar := flag.String("j", ".", "character used to Join the selected key values on to create the read group ID")
 	runParallel := flag.Bool("p", false, "read input on a separate thread (parallel)")
 	bufferSize := flag.Int("b", 10000, "read buffer size (number of lines) when using parallel read method")
 	fileSuffix := flag.String("suffix", ".fastq", "suffix for all output file names")
 	filePrefix := flag.String("prefix", "", "prefix for all output file names")
+	fieldKeys := flag.String("k", "2,3", "comma delimited string of 0-based integer field keys to split the fastq header line on")
 	flag.Parse()
 	cliArgs := flag.Args() // all positional args passed
 
+	// parse the field keys to use for creating the Read Group
+	fieldKeysParts := strings.Split(*fieldKeys, ",")
+	fieldKeysInts := []int{}
+	for _, key := range fieldKeysParts {
+		keyInt, err := strconv.Atoi(key)
+		if err != nil {
+			log.Fatalf("Error while trying to parse key value: %v\n", err)
+		}
+		fieldKeysInts = append(fieldKeysInts, keyInt)
+	}
+
 	config := Config{
 		*headerDelim,
-		*flowCellFieldIndex,
-		*laneFieldIndex,
 		*readGroupJoinChar,
 		*runParallel,
 		*bufferSize,
 		*fileSuffix,
 		*filePrefix,
+		fieldKeysInts,
 		cliArgs,
 	}
 
