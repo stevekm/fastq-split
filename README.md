@@ -86,7 +86,7 @@ gunzip -c ${fastq} | awk 'BEGIN{FS="[@:]"}{out=$4"."$5".fastq"; print > out; for
 
 ## Comparison
 
-Using a 3.5GB size fastq.gz file with 268093288 lines (67023322 total reads), tested on a Linux server, you get roughly 40% speed up using `fastqSplit` over `awk`. Tests with other files show a similar 40-50% speed increase. You can get further speed increases by using `fastqSplit` in combination with [`pigz`](https://github.com/madler/pigz) for decompression.
+Using a 3.5GB size fastq.gz file with 268093288 lines (67023322 total reads), tested on an Ubuntu 20.04 Linux server, you get roughly 40% speed up using `fastqSplit` over GNU `awk`. Tests with other files show a similar 40-50% speed increase. You can get further speed increases by using `fastqSplit` in combination with [`pigz`](https://github.com/madler/pigz) for decompression.
 
 - `awk` method; 132s
 
@@ -108,7 +108,7 @@ user    2m13.515s
 sys     0m43.867s
 ```
 
-- `fastqSplit` + `pigz`
+- `fastqSplit` + `pigz`; 82s
 
 ```
 $ time ( pigz -c -d data.fastq.gz | ./fastqSplit )
@@ -119,3 +119,27 @@ sys     1m6.102s
 ```
 
 Tested with GNU Awk 5.0.1 on x86_64 GNU/Linux, and `pigz` version 2.8.
+
+Note that you may be able to get faster speeds with `mawk` instead of GNU `awk`.
+
+- `mawk`; 93s
+
+```
+$ time ( gunzip -c data.fastq.gz | mawk 'BEGIN{FS="[@:]"}{out=$4"."$5".mawk.fastq"; print > out; for (i = 1; i <= 3; i++) {getline ; print > out}}' )
+
+real    1m33.219s
+user    2m7.609s
+sys     0m30.396s
+```
+
+- `mawk` + `pigz`; 72s
+
+```
+$ time ( pigz -d -c data.fastq.gz | mawk 'BEGIN{FS="[@:]"}{out=$4"."$5".mawk.fastq"; print > out; for (i = 1; i <= 3; i++) {getline ; print > out}}' )
+
+real    1m12.000s
+user    1m41.085s
+sys     0m47.892s
+```
+
+Test with `mawk` version 1.3.4 20200120
