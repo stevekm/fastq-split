@@ -1,4 +1,4 @@
-`fastqSplit`
+# `fastqSplit`
 
 Program to split a fastq file into separate files based on selected fields in each read's header.
 
